@@ -1,3 +1,4 @@
+import querystring from 'querystring'
 import * as _ from './util'
 import dispatch from './dispatch'
 import createHistory from './createHistory'
@@ -16,8 +17,8 @@ export function getCurrentHistory() {
 }
 
 export default function createMiddleware(options) {
-	let finalOptions = _.assign({}, options)
-	let context = _.assign({}, finalOptions.context, {
+	let finalOptions = Object.assign({}, options)
+	let context = Object.assign({}, finalOptions.context, {
 		isServer: true,
 		isClient: false,
 	})
@@ -30,16 +31,27 @@ export default function createMiddleware(options) {
 		throw new Error(`[${router}] is an invalid router`)
 	}
 
-	let history = currentHistory = createHistory('createMemoryHistory', {
-		basename
+	let history = currentHistory = createHistory({
+		type: 'createMemoryHistory',
+		basename: basename,
 	})
 
+	history.prependBasename = url => {
+		if (basename) {
+			return basename + url
+		}
+		return url
+	}
+
 	return function(req, res, next) {
-		let location = createLocation(req.url)
-		let currentContext = _.assign({}, context, {
+		let url = req.url.indexOf(basename) === 0 ? req.url.substr(basename.length) : req.url
+		let location = createLocation(url)
+		let currentContext = Object.assign({}, context, {
 			req,
 			res,
 			history,
+			location,
+			query: req.query,
 		})
 		let render = view => {
 			if (_.isThenable(view)) {
@@ -47,7 +59,7 @@ export default function createMiddleware(options) {
 			}
 			if (view != null) {
 				res.render(layout, {
-					view: view,
+					view: renderer(view),
 					context: currentContext,
 				})
 			}

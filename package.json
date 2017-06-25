@@ -2,7 +2,7 @@
   "name": "retour",
   "version": "0.1.0",
   "description": "retour",
-  "main": "./lib",
+  "main": "./src",
   "scripts": {
     "test": "mocha --require babel-polyfill --compilers babel-register",
     "build": "babel ./src --out-dir ./lib",

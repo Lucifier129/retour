@@ -1,3 +1,4 @@
+import querystring from 'querystring'
 import {
 	Router
 } from './createRouter'
@@ -30,7 +31,7 @@ export function getCurrentHistory() {
 }
 
 export default function createApp(options = {}) {
-	let finalOptions = _.assign({}, defaults, options)
+	let finalOptions = Object.assign({}, defaults, options)
 	let {
 		router,
 		renderer,
@@ -41,12 +42,19 @@ export default function createApp(options = {}) {
 		throw new Error(`[${router}] is an invalid router`)
 	}
 
-	let history = currentHistory = createHistory(type, finalOptions.history)
-	let context = _.assign({}, finalOptions.context, {
+	let history = currentHistory = createHistory(finalOptions.history)
+	let context = Object.assign({}, finalOptions.context, {
 		isClient: true,
 		isServer: false,
 		history: history,
 	})
+
+	history.prependBasename = url => {
+		if (finalOptions.history && finalOptions.history.basename) {
+			return finalOptions.history.basename + url
+		}
+		return url
+	}
 
 	let finalContainer = null
 
@@ -61,13 +69,26 @@ export default function createApp(options = {}) {
 		}
 	}
 
-	function render(location) {
-		let view = dispatch(location, context)
-		if (_.isThenable(view)) {
-			view.then(renderer)
+	function renderToContainer(view, location) {
+		if (currentLocation !== location) {
 			return
 		}
-		renderer(view)
+		renderer(view, getContainer())
+	}
+
+	let currentLocation
+	function render(location) {
+		let query = querystring.parse(location.search.substr(1))
+		let currentContext = Object.assign({}, context, {
+			location: currentLocation = location,
+			query: query,
+		})
+		let view = dispatch(router.routes, currentContext)
+		if (_.isThenable(view)) {
+			view.then(view => renderToContainer(view, location))
+			return
+		}
+		renderToContainer(view, location)
 	}
 
 	let unlisten = null

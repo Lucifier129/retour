@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react'
-import getCurrentHistory from '../../../src/getCurrentHistory'
+import { getCurrentHistory, createLocation} from 'retour'
 
-class Link extends React.Component {
+export default class Link extends React.Component {
 	static contextTypes = {
 		history: PropTypes.object,
 	}
@@ -19,8 +19,8 @@ class Link extends React.Component {
 		let { to, replace, ...props } = this.props
 		if (to) {
 			let history = getCurrentHistory()
-			to = history.createHref(to)
+			to = history.prependBasename(to)
 		}
-		return <a {...this.props} href={to || false} onClick={this.handleClick} />
+		return <a {...props} href={to || false} onClick={this.handleClick} />
 	}
 }

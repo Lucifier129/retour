@@ -10,8 +10,9 @@ const defaults = {
 	hashType: 'hashbang',   
 }
 
-export default function(type, options) {
-	let createHistory = typeMap[type]
+export default function(options) {
+	let finalOptions = Object.assign({}, defaults, options)
+	let createHistory = typeMap[finalOptions.type]
 	let isMatched = (
 		createHistory === createBrowserHistory ||
 		createHistory === createHashHistory ||
@@ -20,6 +21,6 @@ export default function(type, options) {
 	if (!isMatched) {
 		throw new Error(`${type} is an invalid type of history`)
 	}
-	let finalOptions = _.assign({}, defaults, options)
+	
 	return createHistory(finalOptions)
 }
